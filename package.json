@@ -16,6 +16,8 @@
     "@fortawesome/free-solid-svg-icons": "^5.15.1",
     "@fortawesome/vue-fontawesome": "^0.1.10",
     "@vue/cli-service": "^5.0.8",
+    "chokidar": "^4.0.3",
+    "prismarine-nbt": "^2.7.0",
     "prom-client": "^13.0.0",
     "sass": "^1.30.0",
     "sass-loader": "^8.0.2",

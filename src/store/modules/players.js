@@ -90,6 +90,29 @@ const actions = {
     }
     commit("set", players);
     commit("setBluff");
+  },
+  async loadScoreboard({ commit }) {
+    try {
+      const response = await fetch('https://localhost:8080/api/players');
+      if (!response.ok) throw new Error('Failed to fetch scoreboard players');
+      const playersFromApi = await response.json();
+
+      // Map API data to your player objects
+      const players = playersFromApi.map(p => ({
+        ...NEWPLAYER,
+        name: p.name,
+        // use seat as id or generate one, here we just use name for simplicity
+        id: p.name.toLowerCase().replace(/\s+/g, '_'),
+        // You can add more fields if needed
+      }));
+
+      commit('set', players);
+    } catch (error) {
+      console.error('Error loading scoreboard:', error);
+    }
+  },
+  useScoreboard({ dispatch }) {
+    dispatch('loadScoreboard');
   }
 };
 
@@ -120,6 +143,18 @@ const mutations = {
     state.players.push({
       ...NEWPLAYER,
       name
+    });
+  },
+  addMultiple(state, names) {
+  names
+    .split(",")
+    .map(name => name.trim())
+    .filter(name => name.length > 0)
+    .forEach(name => {
+      state.players.push({
+        ...NEWPLAYER,
+        name
+      });
     });
   },
   remove(state, index) {

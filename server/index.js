@@ -2,6 +2,7 @@ const fs = require("fs");
 const https = require("https");
 const WebSocket = require("ws");
 const client = require("prom-client");
+const nbt = require('prismarine-nbt');
 
 // Create a Registry which registers the metrics
 const register = new client.Registry();
@@ -252,9 +253,66 @@ wss.on("close", function close() {
 // prod mode with stats API
 if (process.env.NODE_ENV !== "development") {
   console.log("server starting");
-  server.listen(8080);
-  server.on("request", (req, res) => {
+  server.listen(8080, () => {
+    console.log("Server is now listening on port 8080");
+  });
+    server.on("request", async (req, res) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    if (req.method === "OPTIONS") {
+      // Respond to preflight request quickly
+      res.writeHead(204);
+      res.end();
+      return;
+    }
+    
+    if (req.url === "/api/players") {
+      try {
+        const players = await readPlayerSeats("D:/Users/Nick/Downloads/scoreboard.dat");
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify(players));
+      } catch (err) {
+        res.writeHead(500);
+        res.end(JSON.stringify({ error: "Failed to read player seats" }));
+        console.error(err);
+      }
+      return;
+    }
+
     res.setHeader("Content-Type", register.contentType);
     register.metrics().then(out => res.end(out));
   });
 }
+
+async function readPlayerSeats(filePath) {
+  const data = await fs.promises.readFile(filePath)
+  const parsed = await nbt.parse(data)
+
+  // This depends on your actual file structure, but from your Python code:
+  // 'data' is the root tag, 'PlayerScores' is inside data, etc.
+  const root = parsed.parsed.value
+
+console.log(root.data); // check if root.data exists
+console.log(root.data.value); // then this
+console.log(root.data.value.PlayerScores); // and so on
+
+  // Find the PlayerScores list under root['data']['PlayerScores']
+const playerScoresList = root.data.value.PlayerScores.value.value;
+
+
+  // Extract players with Objective "Player"
+  const players = playerScoresList
+    .filter(entry => entry.Objective.value === 'Player')
+    .map(entry => ({
+    name: entry.Name.value,
+    seat: Math.abs(entry.Score.value)
+    }))
+
+  // Sort by seat ascending
+  players.sort((a, b) => a.seat - b.seat)
+
+  return players
+}
+
+

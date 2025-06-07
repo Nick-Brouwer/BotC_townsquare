@@ -155,6 +155,8 @@
           <!-- Users -->
           <li class="headline">Players</li>
           <li @click="addPlayer" v-if="players.length < 20">Add<em>[A]</em></li>
+          <li @click="addPlayers" v-if="players.length < 20">Add multiple<em>[A]</em></li>
+          <li @click="useScoreboard" v-if="players.length < 20">Use scoreboard<em>[A]</em></li>
           <li @click="randomizeSeatings" v-if="players.length > 2">
             Randomize
             <em><font-awesome-icon icon="dice"/></em>
@@ -317,6 +319,18 @@ export default {
       if (name) {
         this.$store.commit("players/add", name);
       }
+    },
+    addPlayers() {
+      if (this.session.isSpectator) return;
+      if (this.players.length >= 20) return;
+      const name = prompt("Player names");
+      if (name) {
+        this.$store.commit("players/addMultiple", name);
+      }
+    },
+    useScoreboard() {
+      if (this.session.isSpectator) return;
+      this.$store.dispatch("players/useScoreboard");      
     },
     randomizeSeatings() {
       if (this.session.isSpectator) return;

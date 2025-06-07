@@ -4,10 +4,13 @@
   "description": "Blood on the Clocktower Town Square",
   "author": "Steffen Baumgart",
   "scripts": {
-    "serve": "vue-cli-service serve",
+    "serve": "vue-cli-service serve --open",
     "build": "vue-cli-service build ./src/main.js",
     "lint": "vue-cli-service lint",
-    "lint-ci": "vue-cli-service lint --no-fix --max-warnings=0"
+    "lint-ci": "vue-cli-service lint --no-fix --max-warnings=0",
+    "start": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "node server/index.js",
+    "client": "npm run serve"
   },
   "main": "App.vue",
   "dependencies": {
@@ -29,6 +32,7 @@
   "devDependencies": {
     "@vue/cli-plugin-eslint": "^5.0.8",
     "@vue/eslint-config-prettier": "^8.0.0",
+    "concurrently": "^9.1.2",
     "eslint": "^8.53.0",
     "eslint-plugin-prettier": "^5.0.1",
     "eslint-plugin-vue": "^9.18.1",

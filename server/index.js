@@ -293,13 +293,8 @@ async function readPlayerSeats(filePath) {
   // 'data' is the root tag, 'PlayerScores' is inside data, etc.
   const root = parsed.parsed.value
 
-console.log(root.data); // check if root.data exists
-console.log(root.data.value); // then this
-console.log(root.data.value.PlayerScores); // and so on
-
   // Find the PlayerScores list under root['data']['PlayerScores']
-const playerScoresList = root.data.value.PlayerScores.value.value;
-
+  const playerScoresList = root.data.value.PlayerScores.value.value;
 
   // Extract players with Objective "Player"
   const players = playerScoresList

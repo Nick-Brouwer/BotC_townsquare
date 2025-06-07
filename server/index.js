@@ -269,7 +269,7 @@ if (process.env.NODE_ENV !== "development") {
     
     if (req.url === "/api/players") {
       try {
-        const players = await readPlayerSeats("D:/Users/Nick/Downloads/scoreboard.dat");
+        const players = await readPlayerSeats();
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify(players));
       } catch (err) {
@@ -285,7 +285,30 @@ if (process.env.NODE_ENV !== "development") {
   });
 }
 
-async function readPlayerSeats(filePath) {
+async function readPlayerSeats() {
+  const path = require("path");
+
+  const downloadsDir = "D:/Users/Nick/Downloads";
+  const files = await fs.promises.readdir(downloadsDir);
+
+  const datFiles = files
+    .filter(file => file.startsWith("scoreboard") && file.endsWith(".dat"))
+    .map(file => path.join(downloadsDir, file));
+
+  // Sort by modified time (most recent first)
+  const filesWithStats = await Promise.all(datFiles.map(async file => ({
+    file,
+    mtime: (await fs.promises.stat(file)).mtime
+  })));
+
+  filesWithStats.sort((a, b) => b.mtime - a.mtime);
+
+  if (filesWithStats.length === 0) {
+    throw new Error("No scoreboard .dat files found.");
+  }
+
+  const filePath = filesWithStats[0].file;
+
   const data = await fs.promises.readFile(filePath)
   const parsed = await nbt.parse(data)
 

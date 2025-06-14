@@ -100,9 +100,10 @@ const actions = {
       // Map API data to your player objects
       const players = playersFromApi.map(p => ({
         ...NEWPLAYER,
-        name: p.name,
+        name: p.name + " -" + p.seat + "-",
         // use seat as id or generate one, here we just use name for simplicity
-        id: p.name.toLowerCase().replace(/\s+/g, '_'),
+        // id: p.name.toLowerCase().replace(/\s+/g, '_'),
+        id: p.seat,
         // You can add more fields if needed
       }));
 

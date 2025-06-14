@@ -157,6 +157,7 @@
           <li @click="addPlayer" v-if="players.length < 20">Add<em>[A]</em></li>
           <li @click="addPlayers" v-if="players.length < 20">Add multiple<em>[A]</em></li>
           <li @click="useScoreboard" v-if="players.length < 20">Use scoreboard<em>[A]</em></li>
+          <li @click="exportRoles" v-if="players.length > 2">Export roles<em>[A]</em></li>
           <li @click="randomizeSeatings" v-if="players.length > 2">
             Randomize
             <em><font-awesome-icon icon="dice"/></em>
@@ -331,6 +332,10 @@ export default {
     useScoreboard() {
       if (this.session.isSpectator) return;
       this.$store.dispatch("players/useScoreboard");      
+    },
+    exportRoles() {
+      if (this.session.isSpectator) return;
+      this.$store.dispatch("players/exportRoles");
     },
     randomizeSeatings() {
       if (this.session.isSpectator) return;

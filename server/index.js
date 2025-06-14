@@ -280,9 +280,32 @@ if (process.env.NODE_ENV !== "development") {
       return;
     }
 
+    if (req.url === "/api/exportRoles" && req.method === "POST") {
+      let body = "";
+      req.on("data", chunk => (body += chunk));
+      req.on("end", async () => {
+        try {
+          const roles = JSON.parse(body);
+          await exportRoles(roles);
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ status: "success" }));
+        } catch (err) {
+          res.writeHead(500);
+          res.end(JSON.stringify({ error: "Failed to export roles" }));
+          console.error(err);
+        }
+      });
+      return;
+    }
+
     res.setHeader("Content-Type", register.contentType);
     register.metrics().then(out => res.end(out));
   });
+}
+
+async function exportRoles(roles) {
+  const exportPath = "D:/Users/Nick/Downloads/role_assignments.json";
+  await fs.promises.writeFile(exportPath, JSON.stringify(roles, null, 2), "utf-8");
 }
 
 async function readPlayerSeats() {
@@ -332,5 +355,3 @@ async function readPlayerSeats() {
 
   return players
 }
-
-

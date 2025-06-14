@@ -114,7 +114,14 @@ const actions = {
   },
   useScoreboard({ dispatch }) {
     dispatch('loadScoreboard');
-  }
+  },
+  exportRoles({ state }) {
+    fetch('https://localhost:8080/api/exportRoles', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(state.players) // e.g. [{ name: 'Alice', role: 'Imp' }, ...]
+    });    
+  },
 };
 
 const mutations = {
@@ -189,7 +196,10 @@ const mutations = {
         state.fabled = fabled;
       }
     }
-  }
+  },
+  exportRoles() {
+
+  },
 };
 
 export default {

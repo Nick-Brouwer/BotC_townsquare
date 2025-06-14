@@ -3,6 +3,8 @@ const https = require("https");
 const WebSocket = require("ws");
 const client = require("prom-client");
 const nbt = require('prismarine-nbt');
+const archiver = require("archiver");
+const path = require("path");
 
 // Create a Registry which registers the metrics
 const register = new client.Registry();
@@ -285,8 +287,11 @@ if (process.env.NODE_ENV !== "development") {
       req.on("data", chunk => (body += chunk));
       req.on("end", async () => {
         try {
-          const roles = JSON.parse(body);
-          await exportRoles(roles);
+          const roles = JSON.parse(body)
+          generateDatapack(roles);
+
+          // const roles = JSON.parse(body);
+          // await exportRoles(roles);
           res.writeHead(200, { "Content-Type": "application/json" });
           res.end(JSON.stringify({ status: "success" }));
         } catch (err) {
@@ -309,8 +314,6 @@ async function exportRoles(roles) {
 }
 
 async function readPlayerSeats() {
-  const path = require("path");
-
   const downloadsDir = "D:/Users/Nick/Downloads";
   const files = await fs.promises.readdir(downloadsDir);
 
@@ -355,3 +358,348 @@ async function readPlayerSeats() {
 
   return players
 }
+
+function escapeForMinecraftJSON(text) {
+  return text
+    .replace(/\\/g, '\\\\')  // escape backslashes
+    .replace(/"/g, '\\"')    // escape double quotes
+    .replace(/\n/g, '\\\\n');  // convert newlines to literal \n
+}
+
+function createBookInsertCommand(player, slot = 13) {
+  const coords = chestCoordinates[player.id];
+  if (!coords) return ""; // Skip if no coordinates
+
+  const [x, y, z] = coords;
+
+  // Determine color based on team
+  let color;
+  if (player.role.team === "townsfolk" || player.role.team === "outsider") {
+    color = "blue";
+  } else if (player.role.team === "minion" || player.role.team === "demon") {
+    color = "dark_red";
+  } else {
+    color = "black";
+  }
+
+  const role = escapeForMinecraftJSON(player.role.name);
+
+  const roleWithSymbol = getRoleWithEmoji(player.role.name).replace(/\uFE0F/g, '');;
+  const customName = `[{"text":"${roleWithSymbol}","italic":false,"color":"${color}"}]`;
+
+  const team = player.role.team;
+  const capitalizedTeam = team.charAt(0).toUpperCase() + team.slice(1);
+  const lore = `['{"text":"${capitalizedTeam}","italic":false}']`;
+
+  const ability = escapeForMinecraftJSON(player.role.ability);
+
+  const pageJSON = [
+    `"You are the\\\\n"`,
+    `{"text":"${role}","color":"${color}"}`,
+    `"\\\\n\\\\n"`,
+    `{"text":"${ability}","color":"black"}`
+  ];
+  const pageString = `'[${pageJSON.join(",")}]'`;
+
+  return `data modify block ${x} ${y} ${z} Items set value [{Slot:${slot},id:"minecraft:written_book",Count:1,components:{written_book_content:{title:"${role}",pages:[${pageString}]},lore:${lore},custom_name:'${customName}'}}]`;
+}
+
+function createPlaceholderBookInsertCommand(id, slot = 13) {
+  const coords = chestCoordinates[id];
+  if (!coords) return ""; // Skip if no coordinates
+
+  const [x, y, z] = coords;
+  const title = `No Role #${id}`;
+  const text = `{"text":"Uninhabited house"}`;
+
+  return `data modify block ${x} ${y} ${z} Items set value [{Slot:${slot},id:"minecraft:written_book",Count:1,components:{written_book_content:{title:"${title}",author:"Storyteller",pages:['${text}']}}}]`;
+}
+
+// Create datapack structure
+function generateDatapack(players) {
+  const exportPath = "D:/Users/Nick/Downloads";
+  const basePath = path.join(exportPath, 'botc_datapack');
+  const funcPath = path.join(basePath, 'data', 'botc', 'function');
+  const metaPath = path.join(basePath, 'pack.mcmeta');
+
+  fs.mkdirSync(funcPath, { recursive: true });
+
+  // Create an array of commands first (don't join yet)
+  const commands = players.map((p, i) => createBookInsertCommand(p, 13)).filter(Boolean);
+
+  // Add placeholders for missing players
+  const usedIds = new Set(players.map(p => p.id));
+  for (let id = 1; id <= 12; id++) {
+    if (!usedIds.has(id)) {
+      const placeholderCmd = createPlaceholderBookInsertCommand(id, 13);
+      if (placeholderCmd) commands.push(placeholderCmd);
+    }
+  }
+
+  // Join only when writing the file
+  fs.writeFileSync(path.join(funcPath, 'give_books.mcfunction'), commands.join('\n'), 'utf8');
+
+  // Create 12 placeholder book commands, one for each seat ID 1-12
+  const placeholderCommands = [];
+  for (let id = 1; id <= 12; id++) {
+    const cmd = createPlaceholderBookInsertCommand(id, 13);
+    if (cmd) placeholderCommands.push(cmd);
+  }
+  // Write placeholder book commands to a separate function file
+  fs.writeFileSync(path.join(funcPath, 'reset_books.mcfunction'), placeholderCommands.join('\n'), 'utf8');
+
+  // Create pack.mcmeta
+  const mcmeta = {
+    pack: {
+      pack_format: 48,
+      description: "Blood on the Clocktower Role Books"
+    }
+  };
+  fs.writeFileSync(metaPath, JSON.stringify(mcmeta, null, 2), 'utf8');
+
+  // Create a zip file
+  const output = fs.createWriteStream(path.join(exportPath, 'botc_datapack.zip'));
+  const archive = archiver('zip', { zlib: { level: 9 } });
+
+  output.on('close', () => {
+    console.log(`Datapack zipped (${archive.pointer()} bytes), now cleaning up...`);
+    fs.rmSync(basePath, { recursive: true, force: true });
+    console.log('Datapack folder cleaned up.');
+  });
+
+  archive.on('error', err => {
+    throw err;
+  });
+
+  archive.pipe(output);
+  archive.directory(basePath, false); // Zip contents of botc_datapack folder
+  archive.finalize();
+}
+
+const chestCoordinates = {
+  1: [243, 96, 33],
+  2: [233, 99, 54],
+  3: [212, 95, 45],
+  4: [157, 94, 55],
+  5: [134, 95, 72],
+  6: [114, 93, 53],
+  7: [112, 95, -38],
+  8: [124, 95, -61],
+  9: [154, 96, -68],
+  10: [216, 95, -28],
+  11: [243, 96, -49],
+  12: [254, 96, -17]
+};
+
+function getRoleWithEmoji(roleName) {
+  const emoji = roleEmojis[roleName];
+  return emoji ? `${roleName} ${emoji}` : roleName;
+}
+
+const roleEmojis = {
+  // Trouble Brewing
+  "Washerwoman": "👕",
+  "Librarian": "📚",
+  "Investigator": "🔎",
+  "Chef": "👨‍🍳",
+  "Empath": "❤️",
+  "Fortune Teller": "🔮",
+  "Undertaker": "⚰️",
+  "Monk": "✝️",
+  "Ravenkeeper": "🐦",
+  "Virgin": "💍",
+  "Slayer": "🏹",
+  "Soldier": "🛡️",
+  "Mayor": "🏛️",
+  
+  // Outsiders
+  "Butler": "🤵",
+  "Saint": "👼",
+  "Recluse": "🏮",
+  "Drunk": "🍺",
+  
+  // Minions
+  "Poisoner": "🧪",
+  "Spy": "👓",
+  "Baron": "🎩",
+  "Scarlet Woman": "💋",
+  
+  // Demons
+  "Imp": "🔱",
+  
+  // Travellers
+  "Scapegoat": "🐐",
+  "Gunslinger": "🔫",
+  "Beggar": "🥣",
+  "Bureaucrat": "📋",
+  "Thief": "💎",
+  
+  // Sects & Violets – Townsfolk
+  "Clockmaker": "🕖",
+  "Dreamer": "💭",
+  "Snake Charmer": "🐍",
+  "Mathematician": "🧮",
+  "Flowergirl": "🌼",
+  "Town Crier": "📯",
+  "Oracle": "👁️‍🗨️",
+  "Savant": "🦽",
+  "Seamstress": "✂️",
+  "Philosopher": "🤔",
+  "Artist": "🎨",
+  "Juggler": "🤹",
+  "Sage": "🕯️",
+  
+  // Sects & Violets – Outsiders
+  "Mutant": "🎪",
+  "Sweetheart": "🎀",
+  "Barber": "💈",
+  "Klutz": "🍌",
+  
+  // Sects & Violets – Minions
+  "Evil Twin": "👯",
+  "Witch": "🧙‍♀️",
+  "Cerenovus": "🧠",
+  "Pit‑Hag": "🍲",
+  
+  // Sects & Violets – Demons
+  "Fang Gu": "👐",
+  "Vigormortis": "🗝️",
+  "No Dashii": "🐙",
+  "Vortox": "🌪️",
+  
+  // Sects & Violets – Travellers
+  "Butcher": "🔪",
+  "Bone Collector": "🦴",
+  "Harlot": "👙",
+  "Barista": "☕",
+  "Deviant": "🦮",
+  
+  // Bad Moon Rising – Townsfolk
+  "Grandmother": "👵",
+  "Sailor": "⚓",
+  "Chambermaid": "🧹",
+  "Exorcist": "💼",
+  "Innkeeper": "🛎️",
+  "Gambler": "🎲",
+  "Gossip": "🗣️",
+  "Courtier": "🍷",
+  "Professor": "🎓",
+  "Minstrel": "🎶",
+  "Tea Lady": "🍵",
+  "Pacifist": "🕊️",
+  "Fool": "🤡",
+  
+  // Bad Moon Rising – Outsiders
+  "Goon": "👨",
+  "Lunatic": "🌀",
+  "Tinker": "🔧",
+  "Moonchild": "🌙",
+  
+  // Bad Moon Rising – Minions
+  "Godfather": "🌹",
+  "Devil's Advocate": "⚖️",
+  "Assassin": "🗡️",
+  "Mastermind": "🪑",
+  
+  // Bad Moon Rising – Demons
+  "Zombuul": "🧟",
+  "Pukka": "😈",
+  "Shabaloth": "😃",
+  "Po": "💦",
+
+  // Bad Moon Rising – Travellers
+  "Apprentice": "🛠️",
+  "Matron": "🤶",
+  "Voudon": "💀",
+  "Judge": "⚖️",
+  "Bishop": "♝",
+  
+  // Experimental - Townsfolk
+  "Alchemist": "⚗️",
+  "Alsaahir": "🚬",
+  "Amnesiac": "❔",
+  "Atheist": "🪐",
+  "Balloonist": "🎈",
+  "Banshee": "👻",
+  "Bounty Hunter": "🎯",
+  "Cannibal": "🥧",
+  "Choirboy": "👦",
+  "Cult Leader": "⛛",
+  "Engineer": "⚙️",
+  "Farmer": "🌾", 
+  "Fisherman": "🎣",
+  "General": "🎖️",
+  "Huntsman": "⛰️",
+  "King": "👑",
+  "Knight": "♞",
+  "Lycanthrope": "🐾",
+  "Magician": "🐰",
+  "Nightwatchman": "🔦",
+  "Noble": "⚜️",
+  "Pixie": "🧚",
+  "Poppy Grower": "🥀",
+  "Preacher": "📓",
+  "Shugenja": "⛩️",
+  "Steward": "📜",
+  "Village Idiot": "🍭",
+
+  // Experimental - Outsiders
+  "Acrobat": "🎋",
+  "Damsel": "👠",
+  "Golem": "🗿",
+  "Hatter": "🧢",
+  "Heretic": "🙉",
+  "Hermit": "⛯",
+  "Ogre": "👹",
+  "Plague Doctor": "🩺",
+  "Politician": "🗳️",
+  "Puzzlemaster": "🧩",
+  "Snitch": "👄",
+  "Zealot": "🍾",
+
+  // Experimental - Minions
+  "Boomdandy": "💣",
+  "Fearmonger": "😱",
+  "Goblin": "😁",
+  "Harpy": "🦅",
+  "Marionette": "🧵",
+  "Mezepheles": "🪶",
+  "Organ Grinder": "🐒",
+  "Psychopath": "🪓",
+  "Summoner": "🙌",
+  "Vizier": "🤴",
+  "Widow": "🕷️",
+
+  // Exprimental - Demons
+  "Al-Hadikhia": "👲",
+  "Kazali": "🤖",
+  "Legion": "🖐️",
+  "Leviathan": "🐋",
+  "Lil' Monsta": "👒",
+  "Lleech": "🪱",
+  "Lord of Typhon": "🐂",
+  "Ojo": "👁️",
+  "Riot": "🛞",  
+
+  // Expirimental - Travellers
+  "Gangster": "🪒",
+
+  // Fabled
+  "Doomsayer": "⚡",
+  "Angel": "😇",
+  "Buddhist": "☸️",
+  "Hell's Librarian": "📚",
+  "Revolutionary": "✊",
+  "Fiddler": "🎻",
+  "Toymaker": "🪆",
+  "Fibbin": "🩰",
+  "Duchess": "👗",
+  "Sentinel": "🌉",
+  "Spirit of Ivory": "🐘",
+  "Djinn": "🪔",
+  "Bootlegger": "☠️",
+  "Ferryman": "🚣",
+  "Gardener": "🏡",
+  "Stormcatcher": "🥽",
+};
+

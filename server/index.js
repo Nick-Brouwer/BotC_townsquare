@@ -384,12 +384,11 @@ function createBookInsertCommand(player, slot = 13) {
 
   const role = escapeForMinecraftJSON(player.role.name);
 
-  const roleWithSymbol = getRoleWithEmoji(player.role.name).replace(/\uFE0F/g, '');;
-  const customName = `[{"text":"${roleWithSymbol}","italic":false,"color":"${color}"}]`;
-
   const team = player.role.team;
   const capitalizedTeam = team.charAt(0).toUpperCase() + team.slice(1);
-  const lore = `['{"text":"${capitalizedTeam}","italic":false}']`;
+
+  const roleWithSymbol = getRoleWithEmoji(player.role.name).replace(/\uFE0F/g, '');;
+  const customName = `[{"text":"${roleWithSymbol} - ${capitalizedTeam}","italic":false,"color":"${color}"}]`;
 
   const ability = escapeForMinecraftJSON(player.role.ability);
 
@@ -399,9 +398,12 @@ function createBookInsertCommand(player, slot = 13) {
     `"\\\\n\\\\n"`,
     `{"text":"${ability}","color":"black"}`
   ];
-  const pageString = `'[${pageJSON.join(",")}]'`;
 
-  return `data modify block ${x} ${y} ${z} Items set value [{Slot:${slot},id:"minecraft:written_book",Count:1,components:{written_book_content:{title:"${role}",pages:[${pageString}]},lore:${lore},custom_name:'${customName}'}}]`;
+  const loreAbility = splitTextToLoreComponents(ability);
+
+  const pageString = `'[${pageJSON.join(",")}]'`;
+  
+  return `data modify block ${x} ${y} ${z} Items set value [{Slot:${slot},id:"minecraft:written_book",Count:1,components:{written_book_content:{title:"${role}",pages:[${pageString}]},custom_data:{role_book:1},lore:${loreAbility},custom_name:'${customName}'}}]`;
 }
 
 function createPlaceholderBookInsertCommand(id, slot = 13) {
@@ -412,7 +414,7 @@ function createPlaceholderBookInsertCommand(id, slot = 13) {
   const title = `No Role #${id}`;
   const text = `{"text":"Uninhabited house"}`;
 
-  return `data modify block ${x} ${y} ${z} Items set value [{Slot:${slot},id:"minecraft:written_book",Count:1,components:{written_book_content:{title:"${title}",author:"Storyteller",pages:['${text}']}}}]`;
+  return `data modify block ${x} ${y} ${z} Items set value [{Slot:${slot},id:"minecraft:written_book",Count:1,components:{written_book_content:{title:"${title}",author:"Storyteller",pages:['${text}']},custom_data:{role_book:1}}}]`;
 }
 
 // Create datapack structure
@@ -425,7 +427,10 @@ function generateDatapack(players) {
   fs.mkdirSync(funcPath, { recursive: true });
 
   // Create an array of commands first (don't join yet)
-  const commands = players.map((p, i) => createBookInsertCommand(p, 13)).filter(Boolean);
+  const commands = [
+    'clear @a minecraft:written_book[minecraft:custom_data={role_book:1}]',
+    ...players.map((p, i) => createBookInsertCommand(p, 13)).filter(Boolean)
+  ];
 
   // Add placeholders for missing players
   const usedIds = new Set(players.map(p => p.id));
@@ -474,6 +479,27 @@ function generateDatapack(players) {
   archive.pipe(output);
   archive.directory(basePath, false); // Zip contents of botc_datapack folder
   archive.finalize();
+}
+
+function splitTextToLoreComponents(text, maxLength = 40) {
+  const words = text.split(' ');
+  const lines = [];
+  let currentLine = '';
+
+  for (const word of words) {
+    if ((currentLine + word).length + (currentLine ? 1 : 0) > maxLength) {
+      lines.push(currentLine);
+      currentLine = word;
+    } else {
+      currentLine += (currentLine ? ' ' : '') + word;
+    }
+  }
+
+  if (currentLine) lines.push(currentLine);
+
+  // Convert to lore components
+  const loreComponents = lines.map(line => `'{"text":"${line}","italic":false}'`);
+  return `[${loreComponents.join(',')}]`;
 }
 
 const chestCoordinates = {

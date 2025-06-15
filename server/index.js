@@ -417,6 +417,99 @@ function createPlaceholderBookInsertCommand(id, slot = 13) {
   return `data modify block ${x} ${y} ${z} Items set value [{Slot:${slot},id:"minecraft:written_book",Count:1,components:{written_book_content:{title:"${title}",author:"Storyteller",pages:['${text}']},custom_data:{role_book:1}}}]`;
 }
 
+function createVisitOrderBook(players, nightType = true) {
+  const nightTypeString = nightType ? "firstNight" : "otherNight";  
+  
+  const filtered = players
+    .filter(p => {
+      const priority = p.role[nightTypeString];
+      const team = p.role.team;
+      return (
+        typeof priority === "number" &&
+        (priority !== 0 || team === "demon" || team === "minion")
+      );
+    })
+    .map(p => ({
+      id: p.id,
+      name: p.name,
+      role: p.role.name,
+      team: p.role.team,
+      priority: p.role[nightTypeString]
+    }));
+
+  const order = filtered.sort((a, b) => a.priority - b.priority);
+
+  const pages = [];
+  let pageJson = [];
+
+    // Add the header line to the first page
+    pageJson.push({
+      text: nightType ? "First night order:\\n\\n" : "Other nights order:\\n\\n"
+    });
+
+  for (let i = 0; i < order.length; i++) {
+    const p = order[i];
+    const coords = teleportCoordinates[p.id];
+    if (!coords) continue; // skip if no coords
+
+    const paddedId = p.id.toString().padStart(2, "0");
+    const lineText = `${paddedId}- ${p.role}\\n`;
+
+    const lineComponent = {
+      text: lineText,
+      color: "black",
+      bold: true,
+      clickEvent: {
+        action: "run_command",
+        value: `/tp @s ${coords[0]} ${coords[1]} ${coords[2]}`
+      }
+    };
+
+    const currentLengthRoles = pageJson.reduce((acc, cur) => acc + (cur.text?.length || 0), 0);
+    if (currentLengthRoles + lineText.length > 220) {
+      pages.push(JSON.stringify({ text: "", extra: pageJson }));
+      pageJson = [];
+    }
+
+    pageJson.push(lineComponent);
+  }
+  
+  // Add teleport to Town Square
+  const townCoords = teleportCoordinates.townSquare;
+  const townSquareLine = {
+    text: "Teleport to Town Square\\n",
+    color: "gold",
+    bold: true,
+    clickEvent: {
+      action: "run_command",
+      value: `/tp @s ${townCoords[0]} ${townCoords[1]} ${townCoords[2]}`
+    }
+  };
+
+  const currentLength = pageJson.reduce((acc, cur) => acc + (cur.text?.length || 0), 0);
+  if (currentLength + townSquareLine.text.length > 220) {
+    pages.push(JSON.stringify({ text: "", extra: pageJson }));
+    pageJson = [];
+  }
+
+  pageJson.push(townSquareLine);
+
+  if (pageJson.length > 0) {
+    pages.push(JSON.stringify({ text: "", extra: pageJson }));
+  }
+
+  return pages;
+}
+
+function createVisitOrderBookCommand(players, firstNight)
+{
+  const title = firstNight ? "First Night" : "Other Nights";
+  const pages = createVisitOrderBook(players, firstNight);
+  const joinedPages = `['${pages.join(",")}']`;
+
+  return `give @s minecraft:written_book[minecraft:written_book_content={title:"${title}",author:"Storyteller",pages:${joinedPages}},custom_data={role_book:1}]`;
+}
+
 // Create datapack structure
 function generateDatapack(players) {
   const exportPath = "D:/Users/Nick/Downloads";
@@ -442,7 +535,19 @@ function generateDatapack(players) {
   }
 
   // Join only when writing the file
-  fs.writeFileSync(path.join(funcPath, 'give_books.mcfunction'), commands.join('\n'), 'utf8');
+  // fs.writeFileSync(path.join(funcPath, 'give_books.mcfunction'), commands.join('\n'), 'utf8');
+  const storytellerBooks = [
+    createVisitOrderBookCommand(players, true),
+    createVisitOrderBookCommand(players, false)
+  ];
+
+  fs.writeFileSync(
+    path.join(funcPath, 'give_books.mcfunction'),
+    [...commands, ...storytellerBooks].join('\n'),
+    'utf8'
+  );
+
+
 
   // Create 12 placeholder book commands, one for each seat ID 1-12
   const placeholderCommands = [];
@@ -521,6 +626,23 @@ function getRoleWithEmoji(roleName) {
   const emoji = roleEmojis[roleName];
   return emoji ? `${roleName} ${emoji}` : roleName;
 }
+
+const teleportCoordinates = {
+  1: [239.46, 96.00, 32.51],
+  2: [235.57, 99.00, 48.41],
+  3: [211.47, 95.00, 41.63],
+  4: [153.41, 94.06, 57.46],
+  5: [133.11, 95.06, 69.52],
+  6: [119.68, 93.00, 47.04],
+  7: [116.60, 95.06, -39.98],
+  8: [126.63, 95.00, -58.30],
+  9: [158.54, 96.00, -64.53],
+  10: [222.61, 95.00, -32.48],
+  11: [246.50, 96.00, -46.30],
+  12: [246.40, 96.00, -19.50],
+  roles: [196, 84, 6],
+  townSquare: [167.51, 92.00, -3.54]
+};
 
 const roleEmojis = {
   // Trouble Brewing

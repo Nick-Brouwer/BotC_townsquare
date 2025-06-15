@@ -5,6 +5,7 @@ const client = require("prom-client");
 const nbt = require('prismarine-nbt');
 const archiver = require("archiver");
 const path = require("path");
+const tips = require('./tips.json');
 
 // Create a Registry which registers the metrics
 const register = new client.Registry();
@@ -308,11 +309,6 @@ if (process.env.NODE_ENV !== "development") {
   });
 }
 
-async function exportRoles(roles) {
-  const exportPath = "D:/Users/Nick/Downloads/role_assignments.json";
-  await fs.promises.writeFile(exportPath, JSON.stringify(roles, null, 2), "utf-8");
-}
-
 async function readPlayerSeats() {
   const downloadsDir = "D:/Users/Nick/Downloads";
   const files = await fs.promises.readdir(downloadsDir);
@@ -403,7 +399,147 @@ function createBookInsertCommand(player, slot = 13) {
 
   const pageString = `'[${pageJSON.join(",")}]'`;
   
-  return `data modify block ${x} ${y} ${z} Items set value [{Slot:${slot},id:"minecraft:written_book",Count:1,components:{written_book_content:{title:"${role}",pages:[${pageString}]},custom_data:{role_book:1},lore:${loreAbility},custom_name:'${customName}'}}]`;
+  return `data modify block ${x} ${y} ${z} Items set value [{Slot:${slot},id:"minecraft:written_book",Count:1,components:{written_book_content:{title:"${role}",author:"",pages:[${pageString}]},custom_data:{role_book:1},lore:${loreAbility},custom_name:'${customName}'}}]`;
+}
+
+function createTTBookInsertCommand(player, slot = 14) {
+  const coords = chestCoordinates[player.id];
+  if (!coords) return ""; // Skip if no coordinates
+
+  const [x, y, z] = coords;
+
+  const found = tips.find(t => t.name === player.role.name);
+  if (!found) return "";
+
+  const foundTips = found.tips;
+  const pages = [];
+  let currentPage = "";
+  const maxChars = 256;
+
+  for (const tip of foundTips) {
+    const formattedTip = (currentPage ? "\\n" : "") + tip;
+
+    if (currentPage.length + formattedTip.length <= maxChars) {
+      currentPage += formattedTip;
+    } else {
+      pages.push(currentPage);
+      currentPage = tip;
+
+      // If tip itself is too long, split
+      while (currentPage.length > maxChars) {
+        pages.push(currentPage.slice(0, maxChars));
+        currentPage = currentPage.slice(maxChars);
+      }
+    }
+  }
+
+  if (currentPage) {
+    pages.push(currentPage);
+  }
+
+  // Escape for Minecraft JSON and wrap in {"text":""}
+  const formattedPages = pages.map(p => {
+    const escaped = p.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+    return `{"text":"${escaped}"}`;
+  });
+
+  const escapedTitle = escapeForMinecraftJSON(`${player.role.name} tips`);
+
+  return `data modify block ${x} ${y} ${z} Items[{Slot:${slot}b}] set value {Slot:${slot}b,id:"minecraft:written_book",Count:1b,components:{written_book_content:{title:"${escapedTitle}",author:"Storyteller",pages:[${formattedPages.join(",")}]},custom_data:{role_book:1}}}`;
+}
+
+function createCombinedBookInsertCommand(player) {
+  const coords = chestCoordinates[player.id];
+  if (!coords) return ""; // Skip if no coordinates
+
+  const [x, y, z] = coords;
+
+  // Determine color based on team
+  let color;
+  const team = player.role.team;
+  if (team === "townsfolk" || team === "outsider") {
+    color = "blue";
+  } else if (team === "minion" || team === "demon") {
+    color = "dark_red";
+  } else {
+    color = "black";
+  }
+
+  const role = escapeForMinecraftJSON(player.role.name);
+  const ability = escapeForMinecraftJSON(player.role.ability);
+  const roleWithSymbol = getRoleWithEmoji(player.role.name).replace(/\uFE0F/g, '');
+  const capitalizedTeam = team.charAt(0).toUpperCase() + team.slice(1);
+  const customName = `[{"text":"${roleWithSymbol} - ${capitalizedTeam}","italic":false,"color":"${color}"}]`;
+
+  const pageJSON = [
+    `"You are the\\\\n"`,
+    `{"text":"${role}","color":"${color}"}`,
+    `"\\\\n\\\\n"`,
+    `{"text":"${ability}","color":"black"}`
+  ];
+  const pageString = `'[${pageJSON.join(",")}]'`;
+  const loreAbility = splitTextToLoreComponents(ability);
+
+  // Role Book
+  const roleBook = `{Slot:13,id:"minecraft:written_book",Count:1,components:{written_book_content:{title:"${role}",author:"",pages:[${pageString}]},custom_data:{role_book:1},lore:${loreAbility},custom_name:'${customName}'}}`;
+
+  // Tips Book
+  const found = tips.find(t => t.name === player.role.name);
+  let tipsBook = null;
+  if (found) {
+    const foundTips = found.tips;
+    const pages = [];
+    let currentPage = "";
+    const maxChars = 256;
+
+    for (let i = 0; i < foundTips.length; i++) {
+      const tip = foundTips[i];
+      const prefix = `Tip #${i + 1}: `;
+      const formattedTip = (currentPage ? "\\n" : "") + prefix + tip;
+
+      if (currentPage.length + formattedTip.length > maxChars - 50) {
+        if (currentPage.length > 0) {
+          pages.push(currentPage);
+          currentPage = "";
+        }
+        currentPage = prefix + tip;
+
+        while (currentPage.length > maxChars) {
+          let splitPos = currentPage.lastIndexOf(' ', maxChars);
+          if (splitPos === -1) {
+            splitPos = maxChars; // no spaces, hard cut
+          }
+          pages.push(currentPage.slice(0, splitPos));
+          currentPage = currentPage.slice(splitPos).trimStart();
+        }
+      } else {
+        currentPage += formattedTip;
+      }
+    }
+
+    // Push the final leftover page, if any
+    // if (currentPage.length > 0) {
+    //   pages.push(currentPage);
+    // }
+
+
+    if (currentPage) pages.push(currentPage);
+
+    const formattedPages = pages.map(p => {
+      const escaped = p
+        .replace(/\\/g, "\\\\")   // escape backslashes first
+        .replace(/"/g, '\\\\"')     // escape double quotes
+        .replace(/'/g, "\\'");    // escape single quotes      
+      return `[{"text":"${escaped}"}]`;
+    });
+
+    const escapedTitle = escapeForMinecraftJSON(`${player.role.name} tips`);
+
+    tipsBook = `{Slot:14,id:"minecraft:written_book",Count:1,components:{written_book_content:{title:"${escapedTitle}",author:"",pages:[${formattedPages.map(p => `'${p}'`).join(",")}]},custom_data:{role_book:1}}}`;
+  }
+
+  const books = tipsBook ? `[${roleBook},${tipsBook}]` : `[${roleBook}]`;
+  return `data modify block ${x} ${y} ${z} Items set value ${books}`;
 }
 
 function createPlaceholderBookInsertCommand(id, slot = 13) {
@@ -519,10 +655,9 @@ function generateDatapack(players) {
 
   fs.mkdirSync(funcPath, { recursive: true });
 
-  // Create an array of commands first (don't join yet)
   const commands = [
     'clear @a minecraft:written_book[minecraft:custom_data={role_book:1}]',
-    ...players.map((p, i) => createBookInsertCommand(p, 13)).filter(Boolean)
+    ...players.map(p => createCombinedBookInsertCommand(p)).filter(Boolean)
   ];
 
   // Add placeholders for missing players
@@ -534,8 +669,7 @@ function generateDatapack(players) {
     }
   }
 
-  // Join only when writing the file
-  // fs.writeFileSync(path.join(funcPath, 'give_books.mcfunction'), commands.join('\n'), 'utf8');
+  // Visit order books (storyteller use only)
   const storytellerBooks = [
     createVisitOrderBookCommand(players, true),
     createVisitOrderBookCommand(players, false)
@@ -547,13 +681,13 @@ function generateDatapack(players) {
     'utf8'
   );
 
-  // Create 12 placeholder book commands, one for each seat ID 1-12
+  // Reset file with just placeholders
   const placeholderCommands = [];
   for (let id = 1; id <= 12; id++) {
     const cmd = createPlaceholderBookInsertCommand(id, 13);
     if (cmd) placeholderCommands.push(cmd);
   }
-  // Write placeholder book commands to a separate function file
+
   fs.writeFileSync(
     path.join(funcPath, 'reset_books.mcfunction'),
     ['clear @a minecraft:written_book[minecraft:custom_data={role_book:1}]', ...placeholderCommands].join('\n'),
@@ -569,7 +703,7 @@ function generateDatapack(players) {
   };
   fs.writeFileSync(metaPath, JSON.stringify(mcmeta, null, 2), 'utf8');
 
-  // Create a zip file
+  // Create zip file
   const output = fs.createWriteStream(path.join(exportPath, 'botc_datapack.zip'));
   const archive = archiver('zip', { zlib: { level: 9 } });
 
@@ -584,7 +718,7 @@ function generateDatapack(players) {
   });
 
   archive.pipe(output);
-  archive.directory(basePath, false); // Zip contents of botc_datapack folder
+  archive.directory(basePath, false);
   archive.finalize();
 }
 

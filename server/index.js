@@ -547,8 +547,6 @@ function generateDatapack(players) {
     'utf8'
   );
 
-
-
   // Create 12 placeholder book commands, one for each seat ID 1-12
   const placeholderCommands = [];
   for (let id = 1; id <= 12; id++) {
@@ -556,7 +554,11 @@ function generateDatapack(players) {
     if (cmd) placeholderCommands.push(cmd);
   }
   // Write placeholder book commands to a separate function file
-  fs.writeFileSync(path.join(funcPath, 'reset_books.mcfunction'), placeholderCommands.join('\n'), 'utf8');
+  fs.writeFileSync(
+    path.join(funcPath, 'reset_books.mcfunction'),
+    ['clear @a minecraft:written_book[minecraft:custom_data={role_book:1}]', ...placeholderCommands].join('\n'),
+    'utf8'
+  );
 
   // Create pack.mcmeta
   const mcmeta = {

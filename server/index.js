@@ -474,6 +474,21 @@ function createPlaceholderBookInsertCommand(id, slot = 13) {
   return `data modify block ${x} ${y} ${z} Items set value [{Slot:${slot},id:"minecraft:written_book",Count:1,components:{written_book_content:{title:"${title}",author:"Storyteller",pages:['${text}']},custom_data:{role_book:1}}}]`;
 }
 
+function applyNames(players, nameMap) {
+  const nameCommands = [];
+
+  for (const player of players) {
+    const trimmed = player.name.replace(/\s*-\d+-\s*$/, "").trim();
+    const realName = nameMap[trimmed];
+    if (!realName) continue;
+
+    nameCommands.push(`name set ${trimmed} "${realName}"`);
+    nameCommands.push(`scoreboard players display name ${trimmed} Player "${realName}"`);
+  }
+
+  return nameCommands;
+}
+
 function createVisitOrderBook(players, nightType = true) {
   const nightTypeString = nightType ? "firstNight" : "otherNight";  
   
@@ -596,9 +611,11 @@ function generateDatapack(players) {
     createVisitOrderBookCommand(players, false)
   ];
 
+  const nameCommands = applyNames(players, nameMap);
+
   fs.writeFileSync(
     path.join(funcPath, 'give_books.mcfunction'),
-    [...commands, ...storytellerBooks].join('\n'),
+    [...commands, ...storytellerBooks, ...nameCommands].join('\n'),
     'utf8'
   );
 
@@ -701,12 +718,26 @@ const teleportCoordinates = {
   townSquare: [167.51, 92.00, -3.54]
 };
 
+const nameMap = {
+  "Dehoux": "Nick",
+  "hoihallohoi": "Joël",
+  "AerialLandDuck": "Koen",
+  "Xvirael": "Sander",
+  "Twinkelaar": "Jochem",
+  "Legeora": "Bas",
+  "CheesyDonut": "Rogier",
+  "timmyboynl": "Tim",
+  "goopsy_woopsy": "Mark",
+  "floopsy_woopsy": "Maria",
+  "McMinehouse": "Gijs",  
+}
+
 const roleEmojis = {
   // Trouble Brewing
   "Washerwoman": "👕",
   "Librarian": "📚",
   "Investigator": "🔎",
-  "Chef": "👨‍🍳",
+  "Chef": "🍳",
   "Empath": "❤️",
   "Fortune Teller": "🔮",
   "Undertaker": "⚰️",

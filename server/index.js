@@ -447,9 +447,16 @@ function createCombinedBookInsertCommand(player) {
       return `[{"text":"${escaped}"}]`;
     });
 
+    // Page 1: Link page (clickable)
+    const linkPage = JSON.stringify([
+      { text: "Tips are available in this book starting next page.\\n", color: "back" },
+      { text: "\\nOr you can read them online", color: "blue", underlined: true, clickEvent: { action: "open_url", value: "https://wiki.bloodontheclocktower.com/" + player.role.name } },
+    ]);
+    const allPages = [`'${linkPage}'`, ...formattedPages.map(p => `'${p}'`)];
+
     const escapedTitle = escapeForMinecraftJSON(`${player.role.name} tips`);
 
-    tipsBook = `{Slot:14,id:"minecraft:written_book",Count:1,components:{written_book_content:{title:"${escapedTitle}",author:"",pages:[${formattedPages.map(p => `'${p}'`).join(",")}]},custom_data:{role_book:1}}}`;
+    tipsBook = `{Slot:14,id:"minecraft:written_book",Count:1,components:{written_book_content:{title:"${escapedTitle}",author:"",pages:[${allPages.join(",")}]},custom_data:{role_book:1}}}`;
   }
 
   const books = tipsBook ? `[${roleBook},${tipsBook}]` : `[${roleBook}]`;

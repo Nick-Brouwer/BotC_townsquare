@@ -33,7 +33,7 @@ const wss = new WebSocket.Server({
     )
 });
 
-function noop() {}
+function noop() { }
 
 // calculate latency on heartbeat
 function heartbeat() {
@@ -259,7 +259,7 @@ if (process.env.NODE_ENV !== "development") {
   server.listen(8080, () => {
     console.log("Server is now listening on port 8080");
   });
-    server.on("request", async (req, res) => {
+  server.on("request", async (req, res) => {
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -269,7 +269,7 @@ if (process.env.NODE_ENV !== "development") {
       res.end();
       return;
     }
-    
+
     if (req.url === "/api/players") {
       try {
         const players = await readPlayerSeats();
@@ -345,8 +345,8 @@ async function readPlayerSeats() {
   const players = playerScoresList
     .filter(entry => entry.Objective.value === 'Player')
     .map(entry => ({
-    name: entry.Name.value,
-    seat: Math.abs(entry.Score.value)
+      name: entry.Name.value,
+      seat: Math.abs(entry.Score.value)
     }))
 
   // Sort by seat ascending
@@ -479,7 +479,11 @@ function applyNames(players, nameMap) {
 
   for (const player of players) {
     const trimmed = player.name.replace(/\s*-\d+-\s*$/, "").trim();
-    const realName = nameMap[trimmed];
+
+    const realNameKey = Object.keys(nameMap).find(
+      key => key.toLowerCase() === trimmed.toLowerCase()
+    );
+    const realName = nameMap[realNameKey];
     if (!realName) continue;
 
     nameCommands.push(`name set ${trimmed} "${realName}"`);
@@ -490,8 +494,8 @@ function applyNames(players, nameMap) {
 }
 
 function createVisitOrderBook(players, nightType = true) {
-  const nightTypeString = nightType ? "firstNight" : "otherNight";  
-  
+  const nightTypeString = nightType ? "firstNight" : "otherNight";
+
   const filtered = players
     .filter(p => {
       const priority = p.role[nightTypeString];
@@ -514,10 +518,10 @@ function createVisitOrderBook(players, nightType = true) {
   const pages = [];
   let pageJson = [];
 
-    // Add the header line to the first page
-    pageJson.push({
-      text: nightType ? "First night order:\\n\\n" : "Other nights order:\\n\\n"
-    });
+  // Add the header line to the first page
+  pageJson.push({
+    text: nightType ? "First night order:\\n\\n" : "Other nights order:\\n\\n"
+  });
 
   for (let i = 0; i < order.length; i++) {
     const p = order[i];
@@ -545,7 +549,7 @@ function createVisitOrderBook(players, nightType = true) {
 
     pageJson.push(lineComponent);
   }
-  
+
   // Add teleport to Town Square
   const townCoords = teleportCoordinates.townSquare;
   const townSquareLine = {
@@ -573,8 +577,7 @@ function createVisitOrderBook(players, nightType = true) {
   return pages;
 }
 
-function createVisitOrderBookCommand(players, firstNight)
-{
+function createVisitOrderBookCommand(players, firstNight) {
   const title = firstNight ? "First Night" : "Other Nights";
   const pages = createVisitOrderBook(players, firstNight);
   const joinedPages = `['${pages.join(",")}']`;
@@ -642,7 +645,19 @@ function generateDatapack(players) {
   fs.writeFileSync(metaPath, JSON.stringify(mcmeta, null, 2), 'utf8');
 
   // Create zip file
-  const output = fs.createWriteStream(path.join(exportPath, 'botc_datapack.zip'));
+  const zipPath = path.join(exportPath, 'botc_datapack.zip');
+
+  // Check if file is in use before proceeding
+  try {
+    const fd = fs.openSync(zipPath, 'w');
+    fs.closeSync(fd);
+  } catch (err) {
+    console.error(`[ERROR] Cannot create zip file. It's likely open or locked: ${zipPath}`);
+    console.error(`[DETAILS] ${err.code}: ${err.message}`);
+    return;
+  }
+
+  const output = fs.createWriteStream(zipPath);
   const archive = archiver('zip', { zlib: { level: 9 } });
 
   output.on('close', () => {
@@ -652,7 +667,7 @@ function generateDatapack(players) {
   });
 
   archive.on('error', err => {
-    throw err;
+    console.error(`[ARCHIVE ERROR] Failed to create zip: ${err.message}`);
   });
 
   archive.pipe(output);
@@ -726,10 +741,13 @@ const nameMap = {
   "Twinkelaar": "Jochem",
   "Legeora": "Bas",
   "CheesyDonut": "Rogier",
-  "timmyboynl": "Tim",
+  "TimmyboyNL": "Tim",
   "goopsy_woopsy": "Mark",
   "floopsy_woopsy": "Maria",
-  "McMinehouse": "Gijs",  
+  "McMinehouse": "Gijs",
+  "MittensIV": "Mittens",
+  "MikouZonata": "Kevin",
+  "Frulletje": "Daan"
 }
 
 const roleEmojis = {
@@ -747,29 +765,29 @@ const roleEmojis = {
   "Slayer": "🏹",
   "Soldier": "🛡️",
   "Mayor": "🏛️",
-  
+
   // Outsiders
   "Butler": "🤵",
   "Saint": "👼",
   "Recluse": "🏮",
   "Drunk": "🍺",
-  
+
   // Minions
   "Poisoner": "🧪",
   "Spy": "👓",
   "Baron": "🎩",
   "Scarlet Woman": "💋",
-  
+
   // Demons
   "Imp": "🔱",
-  
+
   // Travellers
   "Scapegoat": "🐐",
   "Gunslinger": "🔫",
   "Beggar": "🥣",
   "Bureaucrat": "📋",
   "Thief": "💎",
-  
+
   // Sects & Violets – Townsfolk
   "Clockmaker": "🕖",
   "Dreamer": "💭",
@@ -784,32 +802,32 @@ const roleEmojis = {
   "Artist": "🎨",
   "Juggler": "🤹",
   "Sage": "🕯️",
-  
+
   // Sects & Violets – Outsiders
   "Mutant": "🎪",
   "Sweetheart": "🎀",
   "Barber": "💈",
   "Klutz": "🍌",
-  
+
   // Sects & Violets – Minions
   "Evil Twin": "👯",
   "Witch": "🧙‍♀️",
   "Cerenovus": "🧠",
   "Pit‑Hag": "🍲",
-  
+
   // Sects & Violets – Demons
   "Fang Gu": "👐",
   "Vigormortis": "🗝️",
   "No Dashii": "🐙",
   "Vortox": "🌪️",
-  
+
   // Sects & Violets – Travellers
   "Butcher": "🔪",
   "Bone Collector": "🦴",
   "Harlot": "👙",
   "Barista": "☕",
   "Deviant": "🦮",
-  
+
   // Bad Moon Rising – Townsfolk
   "Grandmother": "👵",
   "Sailor": "⚓",
@@ -824,19 +842,19 @@ const roleEmojis = {
   "Tea Lady": "🍵",
   "Pacifist": "🕊️",
   "Fool": "🤡",
-  
+
   // Bad Moon Rising – Outsiders
   "Goon": "👨",
   "Lunatic": "🌀",
   "Tinker": "🔧",
   "Moonchild": "🌙",
-  
+
   // Bad Moon Rising – Minions
   "Godfather": "🌹",
   "Devil's Advocate": "⚖️",
   "Assassin": "🗡️",
   "Mastermind": "🪑",
-  
+
   // Bad Moon Rising – Demons
   "Zombuul": "🧟",
   "Pukka": "😈",
@@ -849,7 +867,7 @@ const roleEmojis = {
   "Voudon": "💀",
   "Judge": "⚖️",
   "Bishop": "♝",
-  
+
   // Experimental - Townsfolk
   "Alchemist": "⚗️",
   "Alsaahir": "🚬",
@@ -862,7 +880,7 @@ const roleEmojis = {
   "Choirboy": "👦",
   "Cult Leader": "⛛",
   "Engineer": "⚙️",
-  "Farmer": "🌾", 
+  "Farmer": "🌾",
   "Fisherman": "🎣",
   "General": "🎖️",
   "Huntsman": "⛰️",
@@ -915,7 +933,7 @@ const roleEmojis = {
   "Lleech": "🪱",
   "Lord of Typhon": "🐂",
   "Ojo": "👁️",
-  "Riot": "🛞",  
+  "Riot": "🛞",
 
   // Expirimental - Travellers
   "Gangster": "🪒",

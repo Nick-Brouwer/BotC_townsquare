@@ -362,6 +362,14 @@ function escapeForMinecraftJSON(text) {
     .replace(/\n/g, '\\\\n');  // convert newlines to literal \n
 }
 
+function escapeForMinecraftJSONLink(text) {
+  return text
+    .replace(/\\/g, '\\\\')  // escape backslashes
+    .replace(/"/g, '\\"')    // escape double quotes
+    .replace(/'/g, "%27")   // escape single quotes      
+    .replace(" ", "_"); // conver spaces to underscores
+}
+
 function createCombinedBookInsertCommand(player) {
   const coords = chestCoordinates[player.id];
   if (!coords) return ""; // Skip if no coordinates
@@ -449,8 +457,8 @@ function createCombinedBookInsertCommand(player) {
 
     // Page 1: Link page (clickable)
     const linkPage = JSON.stringify([
-      { text: "Tips are available in this book starting next page.\\n", color: "back" },
-      { text: "\\nOr you can read them online", color: "blue", underlined: true, clickEvent: { action: "open_url", value: "https://wiki.bloodontheclocktower.com/" + player.role.name } },
+      { text: "Welcome to your role tips!\\nYou can read them in this book ", color: "black" },
+      { text: "or you can read them online by clicking here.", color: "blue", underlined: true, clickEvent: { action: "open_url", value: "https://wiki.bloodontheclocktower.com/" + escapeForMinecraftJSONLink(player.role.name) } },
     ]);
     const allPages = [`'${linkPage}'`, ...formattedPages.map(p => `'${p}'`)];
 
@@ -461,6 +469,65 @@ function createCombinedBookInsertCommand(player) {
 
   const books = tipsBook ? `[${roleBook},${tipsBook}]` : `[${roleBook}]`;
   return `data modify block ${x} ${y} ${z} Items set value ${books}`;
+}
+
+function testCreateAllTipsCommands() {
+  let tipsBookCommands = ["clear @a minecraft:written_book[minecraft:custom_data={role_book:1}]"];
+  tips.forEach(roleTips => {
+    if(roleTips.name === "" || null) return;
+    const foundTips = roleTips.tips;
+    const pages = [];
+    let currentPage = "";
+    const maxChars = 256;
+
+    for (let i = 0; i < foundTips.length; i++) {
+      const tip = foundTips[i];
+      const prefix = `Tip #${i + 1}: `;
+      const formattedTip = (currentPage ? "\\n" : "") + prefix + tip;
+
+      if (currentPage.length + formattedTip.length > maxChars - 50) {
+        if (currentPage.length > 0) {
+          pages.push(currentPage);
+          currentPage = "";
+        }
+        currentPage = prefix + tip;
+
+        while (currentPage.length > maxChars) {
+          let splitPos = currentPage.lastIndexOf(' ', maxChars);
+          if (splitPos === -1) {
+            splitPos = maxChars; // no spaces, hard cut
+          }
+          pages.push(currentPage.slice(0, splitPos));
+          currentPage = currentPage.slice(splitPos).trimStart();
+        }
+      } else {
+        currentPage += formattedTip;
+      }
+    }
+
+    if (currentPage) pages.push(currentPage);
+
+    const formattedPages = pages.map(p => {
+      const escaped = p
+        .replace(/\\/g, "\\\\")   // escape backslashes first
+        .replace(/"/g, '\\\\"')     // escape double quotes
+        .replace(/'/g, "\\'");    // escape single quotes      
+      return `[{"text":"${escaped}"}]`;
+    });
+
+    // Page 1: Link page (clickable)
+    const linkPage = JSON.stringify([
+      { text: "Welcome to your role tips!\\nYou can read them in this book ", color: "black" },
+      { text: "or you can read them online by clicking here.", color: "blue", underlined: true, clickEvent: { action: "open_url", value: "https://wiki.bloodontheclocktower.com/" + escapeForMinecraftJSONLink(roleTips.name)  } },
+    ]);
+    const allPages = [`'${linkPage}'`, ...formattedPages.map(p => `'${p}'`)];
+
+    const escapedTitle = escapeForMinecraftJSON(`${roleTips.name} tips`);
+
+    tipsBookCommands.push(`give @s minecraft:written_book[minecraft:written_book_content={title:"${escapedTitle}",author:"",pages:[${allPages.join(",")}]},custom_data={role_book:1}]`);
+  });
+
+  return tipsBookCommands;
 }
 
 function createPlaceholderBookInsertCommand(id, slot = 13) {
@@ -634,6 +701,8 @@ function generateDatapack(players) {
     ['clear @a minecraft:written_book[minecraft:custom_data={role_book:1}]', ...placeholderCommands].join('\n'),
     'utf8'
   );
+
+  fs.writeFileSync(path.join(funcPath, 'test_books.mcfunction'), testCreateAllTipsCommands().join('\n'));
 
   // Create pack.mcmeta
   const mcmeta = {

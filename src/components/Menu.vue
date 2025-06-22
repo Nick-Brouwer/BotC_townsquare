@@ -331,7 +331,9 @@ export default {
     },
     useScoreboard() {
       if (this.session.isSpectator) return;
-      this.$store.dispatch("players/useScoreboard");      
+      if (confirm("Are you sure you want to reset the game?")) {
+        this.$store.dispatch("players/useScoreboard");      
+      }
     },
     exportRoles() {
       if (this.session.isSpectator) return;

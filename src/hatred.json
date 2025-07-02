@@ -30,16 +30,40 @@
     "id": "Pit-Hag",
     "hatred": [
       {
-        "id": "Heretic",
-        "reason": "A Pit-Hag can not create a Heretic. "
+        "id": "Cult Leader",
+        "reason": "If the Pit-Hag turns an evil player into the Cult Leader, they can't turn good due to their own ability."
       },
       {
         "id": "Damsel",
         "reason": "If a Pit-Hag creates a Damsel, the Storyteller chooses which player it is."
       },
       {
+        "id": "Goon",
+        "reason": "If the Pit-Hag turns an evil player into the Goon, they can't turn good due to their own ability."
+      },
+      {
+        "id": "Heretic",
+        "reason": "A Pit-Hag can not create a Heretic."
+      },
+      {
+        "id": "Leviathan",
+        "reason": "After day 5, the Pit-Hag cannot choose Leviathan."
+      },
+      {
+        "id": "Ogre",
+        "reason": "If the Pit-Hag turns an evil player into the Ogre, they can't turn good due to their own ability."
+      },
+      {
         "id": "Politician",
-        "reason": "A Pit-hag can not create an evil Politician."
+        "reason": "If the Pit-Hag turns an evil player into the Politician, they can't turn good due to their own ability."
+      },
+      {
+        "id": "Summoner",
+        "reason": "The Summoner cannot create an in-play Demon. If the Summoner creates a not-in-play Demon, deaths tonight are arbitrary."
+      },
+      {
+        "id": "Village Idiot",
+        "reason": "If there is a spare token, the Pit-Hag can create an extra Village Idiot. If so, the drunk Village Idiot might change."
       }
     ]
   },
@@ -106,12 +130,24 @@
         "reason": "If the Poppy Grower is in play, Minions don't wake together. They are woken one by one, until one of them chooses to take the Lil' Monsta token."
       },
       {
+        "id": "Hatter",
+        "reason": "If a Demon chooses Lil' Monsta, they also choose a Minion to become and babysit Lil' Monsta tonight."
+      },
+      {
         "id": "Magician",
-        "reason": "Only 1 jinxed character can be in play. "
+        "reason": "Only 1 jinxed character can be in play."
       },
       {
         "id": "Scarlet Woman",
         "reason": "If there are 5 or more players alive and the player holding the Lil' Monsta token dies, the Scarlet Woman is given the Lil' Monsta token tonight."
+      },
+      {
+        "id": "Marionette",
+        "reason": "The Marionette neighbors a Minion, not the Demon. The Marionette is not woken to choose who takes the Lil' Monsta token, and does not learn they are the Marionette if they have the Lil' Monsta token."
+      },
+      {
+        "id": "Vizier",
+        "reason": "The Vizier can die by execution if they are babysitting Lil' Monsta."
       }
     ]
   },
@@ -134,6 +170,10 @@
       {
         "id": "Preacher",
         "reason": "Only 1 jinxed character can be in play."
+      },
+      {
+        "id": "Summoner",
+        "reason": "If the Engineer removes a Summoner from play before that Summoner uses their ability, the Summoner uses their ability immediately."
       }
     ]
   },
@@ -370,6 +410,192 @@
       {
         "id": "Heretic",
         "reason": "If the Lleech has poisoned the Heretic then the Lleech dies, the Heretic remains poisoned."
+      }
+    ]
+  },
+  {
+    "id": "Kazali",
+    "hatred" : [
+      {
+        "id": "Bounty Hunter",
+        "reason": "An evil Townsfolk is only created if the Bounty Hunter is still in play after the Kazali acts."
+      },
+      {
+        "id": "Choirboy",
+        "reason": "The Kazali can not choose the King to become a Minion if a Choirboy is in play."
+      },
+      {
+        "id": "Goon",
+        "reason": "The Kazali can choose that the Goon player is one of their evil Minions."
+      },
+      {
+        "id": "Huntsman",
+        "reason": "If the Kazali chooses the Damsel to become a Minion, and a Huntsman is in play, a good player becomes the Damsel."
+      },
+      {
+        "id": "Marionette",
+        "reason": "If the Kazali chooses to create a Marionette, they must choose one of their neighbors."
+      },
+      {
+        "id": "Soldier",
+        "reason": "The Kazali can choose that the Soldier player is one of their evil Minions."
+      },
+      {
+        "id": "Summoner",
+        "reason": "The Summoner cannot create an in-play Demon. If the Summoner creates a not-in-play Demon, deaths tonight are arbitrary."
+      }
+    ]
+  },
+  {
+    "id": "Banshee",
+    "hatred" : [
+      {
+        "id": "Leviathan",
+        "reason": "Each night*, the Leviathan chooses an alive good player (different to previous nights): a chosen Banshee dies & gains their ability."
+      },
+      {
+        "id": "Riot",
+        "reason": "Each night*, Riot chooses an alive good player (different to previous nights): a chosen Banshee dies & gains their ability."
+      },
+      {
+        "id": "Vortox",
+        "reason": "If the Vortox is in play and the Demon kills the Banshee, the players still learn that the Banshee has died."
+      }
+    ]
+  },
+  {
+    "id": "Hatter",
+    "hatred" : [
+      {
+        "id": "Legion",
+        "reason": "If the Hatter dies and Legion is in play, nothing happens. If the Hatter dies and an evil player chooses Legion, all current evil players become Legion."
+      },
+      {
+        "id": "Leviathan",
+        "reason": "If the Hatter dies on or after day 5, the Demon cannot choose Leviathan."
+      },
+      {
+        "id": "Lil' Monsta",
+        "reason": "If a Demon chooses Lil' Monsta, they also choose a Minion to become and babysit Lil' Monsta tonight."
+      },
+      {
+        "id": "Summoner",
+        "reason": "The Summoner cannot create an in-play Demon. If the Summoner creates a not-in-play Demon, deaths tonight are arbitrary."
+      }
+    ]
+  },
+  {
+    "id": "Alchemist",
+    "hatred" : [
+      {
+        "id": "Boffin",
+        "icon": "boffin.png",
+        "reason": "If the Alchemist has the Boffin ability, the Alchemist does not learn what ability the Demon has."
+      },
+      {
+        "id": "Spy",
+        "icon": "spy.png",
+        "reason": "If the Alchemist has the Spy ability, they do not see the Grimoire, and the real Spy cannot register falsely."
+      },
+      {
+        "id": "Summoner",
+        "icon": "summoner.png",
+        "reason": "If there is an Alchemist-Summoner in play, the game starts with a Demon in play, as normal. If the Alchemist-Summoner chooses a player, they make that player a Demon but do not change their alignment."
+      },
+      {
+        "id": "Widow",
+        "icon": "widow.png",
+        "reason": "If the Alchemist has the Widow ability, they do not see the Grimoire."
+      }
+    ]
+  },
+  {
+    "id": "Zealot",
+    "hatred" : [
+      {
+        "id": "Cannibal",
+        "reason": "If the Cannibal gains the Zealot ability, the Cannibal learns this."
+      },
+      {
+        "id": "Legion",
+        "reason": "The Zealot might register as evil to Legion's ability."
+      },
+      {
+        "id": "Vizier",
+        "reason": "The Zealot might register as evil to the Vizier."
+      }
+    ]
+  },
+  {
+    "id": "Princess",
+    "hatred" : [
+      {
+        "id": "Cannibal",
+        "reason": "If the Cannibal nominated, executed, & killed the Princess today, the Demon doesn't kill tonight."
+      },
+      {
+        "id": "Al-Hadikhia",
+        "reason": "If the Princess nominated & executed a player on their 1st day, no one dies to the Al-Hadikhia ability tonight."
+      }
+    ]
+  },
+  {
+    "id": "Preacher",
+    "hatred" : [
+      {
+        "id": "Legion",
+        "reason": "If the Preacher chooses Legion, Legion keeps their ability, but the Preacher might learn they are Legion."
+      },
+      {
+        "id": "Summoner",
+        "reason": "If the Preacher chose the Summoner on or before the 3rd night, the Summoner chooses which Demon, but the Storyteller chooses which player."
+      },
+      {
+        "id": "Vizier",
+        "reason": "If the Vizier loses their ability, they learn this. If the Vizier is executed while they have their ability, their team wins."
+      }
+    ]
+  },
+  {
+    "id": "Cult Leader",
+    "hatred" : [
+      {
+        "id": "Boffin",
+        "reason": "If the Demon has the Cult Leader ability, they can't turn good due to this ability."
+      },
+      {
+        "id": "Pit-Hag",
+        "reason": "If the Pit-Hag turns an evil player into the Cult Leader, they can't turn good due to their own ability."
+      }
+    ]
+  },
+  {
+    "id": "Goon",
+    "hatred" : [
+      {
+        "id": "Boffin",
+        "reason": "If the Demon has the Goon ability, they can't turn good due to this ability."
+      },
+      {
+        "id": "Kazali",
+        "reason": "The Kazali can choose that the Goon player is one of their evil Minions."
+      },
+      {
+        "id": "Pit-Hag",
+        "reason": "If the Pit-Hag turns an evil player into the Goon, they can't turn good due to their own ability."
+      }
+    ]
+  },
+  {
+    "id": "Engineer",
+    "hatred" : [
+      {
+        "id": "Legion",
+        "reason": "Legion and the Engineer can not both be in play at the start of the game. If the Engineer creates Legion, most players (including all evil players) become evil Legion."
+      },
+      {
+        "id": "Summoner",
+        "reason": "If the Engineer removes a Summoner from play before that Summoner uses their ability, the Summoner uses their ability immediately."
       }
     ]
   }

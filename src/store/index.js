@@ -5,7 +5,7 @@ import socket from "./socket";
 import players from "./modules/players";
 import session from "./modules/session";
 import editionJSON from "../editions.json";
-import rolesJSON from "../roles.json";
+import rolesJSON from "../roles_updated.json";
 import fabledJSON from "../fabled.json";
 import jinxesJSON from "../hatred.json";
 

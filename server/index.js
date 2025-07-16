@@ -6,6 +6,7 @@ const nbt = require('prismarine-nbt');
 const archiver = require("archiver");
 const path = require("path");
 const tips = require('./tips.json');
+const rolesJSON = require("../src/roles_updated.json");
 
 // Create a Registry which registers the metrics
 const register = new client.Registry();
@@ -566,11 +567,7 @@ function createVisitOrderBook(players, nightType = true) {
   const filtered = players
     .filter(p => {
       const priority = p.role[nightTypeString];
-      const team = p.role.team;
-      return (
-        typeof priority === "number" &&
-        (priority !== 0 || team === "demon" || team === "minion")
-      );
+      return typeof priority === "number" && priority !== 0;
     })
     .map(p => ({
       id: p.id,
@@ -579,6 +576,35 @@ function createVisitOrderBook(players, nightType = true) {
       team: p.role.team,
       priority: p.role[nightTypeString]
     }));
+
+
+  if(nightTypeString === "firstNight"){
+    // Get the demon and minion players (even if their priority is 0)
+    const demons = players.filter(p => p.role.team === "demon");
+    const minions = players.filter(p => p.role.team === "minion");
+
+    // Add a demoninfo&bluffs entry for each demon
+    for (const demonPlayer of demons) {
+      filtered.push({
+        id: demonPlayer.id,
+        name: demonPlayer.name,
+        role: demonPlayer.role.name + " i",
+        team: demonPlayer.role.team,
+        priority: rolesJSON.find(char => char.id === "demoninfo&bluffs").firstNight
+      });
+    }
+
+    // Add a minioninfo entry for each minion (showing all demon names)
+    for (const minionPlayer of minions) {
+      filtered.push({
+        id: minionPlayer.id,
+        name: minionPlayer.name,
+        role: minionPlayer.role.name + " i",
+        team: minionPlayer.role.team,
+        priority: rolesJSON.find(char => char.id === "minioninfo").firstNight
+      });
+    }
+  }
 
   const order = filtered.sort((a, b) => a.priority - b.priority);
 

@@ -306,7 +306,7 @@
     "edition": "tb",
     "team": "demon",
     "firstNight": 0,
-    "firstNightReminder": "",
+    "firstNightReminder": "Give bluffs and minion info.",
     "otherNight": 34,
     "otherNightReminder": "The Imp points to a player. That player dies. If the Imp chose themselves: Replace the character of 1 alive minion with a spare Imp token. Show the 'You are' card, then the Imp token.",
     "reminders": [
@@ -708,7 +708,7 @@
     "edition": "bmr",
     "team": "demon",
     "firstNight": 0,
-    "firstNightReminder": "",
+    "firstNightReminder": "Give bluffs and minion info.",
     "otherNight": 35,
     "otherNightReminder": "If no-one died during the day: The Zombuul points to a player. That player dies.",
     "reminders": [
@@ -724,7 +724,7 @@
     "edition": "bmr",
     "team": "demon",
     "firstNight": 40,
-    "firstNightReminder": "The Pukka points to a player. That player is poisoned.",
+    "firstNightReminder": "The Pukka points to a player. That player is poisoned. Give bluffs and minion info.",
     "otherNight": 36,
     "otherNightReminder": "The Pukka points to a player. That player is poisoned. The previously poisoned player dies. ",
     "reminders": [
@@ -740,7 +740,7 @@
     "edition": "bmr",
     "team": "demon",
     "firstNight": 0,
-    "firstNightReminder": "",
+    "firstNightReminder": "Give bluffs and minion info.",
     "otherNight": 37,
     "otherNightReminder": "One player that the Shabaloth chose the previous night might be resurrected. The Shabaloth points to two players. Those players die.",
     "reminders": [
@@ -756,7 +756,7 @@
     "edition": "bmr",
     "team": "demon",
     "firstNight": 0,
-    "firstNightReminder": "",
+    "firstNightReminder": "Give bluffs and minion info.",
     "otherNight": 38,
     "otherNightReminder": "If the Po chose no-one the previous night: The Po points to three players. Otherwise: The Po either shows the 'no' head signal , or points to a player. Chosen players die",
     "reminders": [
@@ -1146,7 +1146,7 @@
     "edition": "snv",
     "team": "demon",
     "firstNight": 0,
-    "firstNightReminder": "",
+    "firstNightReminder": "Give bluffs and minion info.",
     "otherNight": 39,
     "otherNightReminder": "The Fang Gu points to a player. That player dies. Or, if that player was an Outsider and there are no other Fang Gu in play: The Fang Gu dies instead of the chosen player. The chosen player is now an evil Fang Gu. Wake the new Fang Gu. Show the 'You are' card, then the Fang Gu token. Show the 'You are' card, then the thumb-down 'evil' hand sign.",
     "reminders": [
@@ -1162,7 +1162,7 @@
     "edition": "snv",
     "team": "demon",
     "firstNight": 0,
-    "firstNightReminder": "",
+    "firstNightReminder": "Give bluffs and minion info.",
     "otherNight": 43,
     "otherNightReminder": "The Vigormortis points to a player. That player dies. If a Minion, they keep their ability and one of their Townsfolk neighbours is poisoned.",
     "reminders": [
@@ -1179,7 +1179,7 @@
     "edition": "snv",
     "team": "demon",
     "firstNight": 0,
-    "firstNightReminder": "",
+    "firstNightReminder": "Give bluffs and minion info.",
     "otherNight": 40,
     "otherNightReminder": "The No Dashii points to a player. That player dies.",
     "reminders": [
@@ -1195,7 +1195,7 @@
     "edition": "snv",
     "team": "demon",
     "firstNight": 0,
-    "firstNightReminder": "",
+    "firstNightReminder": "Give bluffs and minion info.",
     "otherNight": 41,
     "otherNightReminder": "The Vortox points to a player. That player dies.",
     "reminders": [
@@ -1826,7 +1826,7 @@
     "edition": "",
     "team": "demon",
     "firstNight": 24,
-    "firstNightReminder": "The Lleech points to a player. Place the Poisoned reminder token.",
+    "firstNightReminder": "The Lleech points to a player. Place the Poisoned reminder token. Give bluffs and minion info.",
     "otherNight": 46,
     "otherNightReminder": "The Lleech points to a player. That player dies.",
     "reminders": [
@@ -1842,7 +1842,7 @@
     "edition": "",
     "team": "demon",
     "firstNight": 0,
-    "firstNightReminder": "",
+    "firstNightReminder": "Give bluffs and minion info.",
     "otherNight": 45,
     "otherNightReminder": "The Al-Hadikhia chooses 3 players. Announce the first player, wake them to nod yes to live or shake head no to die, kill or resurrect accordingly, then put to sleep and announce the next player. If all 3 are alive after this, all 3 die.",
     "reminders": [
@@ -1861,7 +1861,7 @@
     "edition": "",
     "team": "demon",
     "firstNight": 0,
-    "firstNightReminder": "",
+    "firstNightReminder": "Give bluffs and minion info.",
     "otherNight": 33,
     "otherNightReminder": "Choose a player, that player dies.",
     "reminders": [
@@ -2040,7 +2040,7 @@
     "edition": "",
     "team": "demon",
     "firstNight": 0,
-    "firstNightReminder": "",
+    "firstNightReminder": "Give bluffs and minion info.",
     "otherNight": 44,
     "otherNightReminder": "he Ojo player points to a character icon on their character sheet. If that character is in play, that player dies—mark them with the “Dead” reminder. If that character is not in play, choose any player. That player dies—mark them with the “Dead” reminder. ",
     "reminders": ["Dead"],
@@ -2144,7 +2144,7 @@
     "edition": "",
     "team": "demon",
     "firstNight": 11,
-    "firstNightReminder": "Show the phrase.",
+    "firstNightReminder": "Show the phrase. Give bluffs and minion info.",
     "otherNight": 48,
     "otherNightReminder": "You may mark players with Dead reminders, these players die.",
     "reminders": ["Dead"],

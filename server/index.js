@@ -346,7 +346,7 @@ async function readPlayerSeats() {
   const players = playerScoresList
     .filter(entry => entry.Objective.value === 'Player')
     .map(entry => ({
-      name: entry.Name.value,
+      name: nameMap[entry.Name.value] || entry.Name.value,
       seat: Math.abs(entry.Score.value)
     }))
 
@@ -356,10 +356,26 @@ async function readPlayerSeats() {
   return players
 }
 
+function escapeForMinecraftJSONTitle(text) {
+  return text
+    .replace(/\\/g, '\\\\')  // escape backslashes
+    .replace(/"/g, '\\"')    // escape double quotes
+    .replace(/\n/g, '\\\\n');  // convert newlines to literal \n
+}
+
 function escapeForMinecraftJSON(text) {
   return text
     .replace(/\\/g, '\\\\')  // escape backslashes
     .replace(/"/g, '\\"')    // escape double quotes
+    .replace(/'/g, "\\'")    // escape single quotes      
+    .replace(/\n/g, '\\\\n');  // convert newlines to literal \n
+}
+
+function escapeForMinecraftJSONAlt(text) {
+  return text
+    .replace(/\\/g, '\\\\')  // escape backslashes
+    .replace(/"/g, '\\"')    // escape double quotes
+    .replace(/'/g, "")    // escape single quotes      
     .replace(/\n/g, '\\\\n');  // convert newlines to literal \n
 }
 
@@ -388,15 +404,15 @@ function createCombinedBookInsertCommand(player) {
     color = "black";
   }
 
-  const role = escapeForMinecraftJSON(player.role.name);
+  const role = escapeForMinecraftJSONTitle(player.role.name);
   const ability = escapeForMinecraftJSON(player.role.ability);
-  const roleWithSymbol = getRoleWithEmoji(player.role.name).replace(/\uFE0F/g, '');
+  const roleWithSymbol = escapeForMinecraftJSON(getRoleWithEmoji(player.role.name).replace(/\uFE0F/g, ''));
   const capitalizedTeam = team.charAt(0).toUpperCase() + team.slice(1);
   const customName = `[{"text":"${roleWithSymbol} - ${capitalizedTeam}","italic":false,"color":"${color}"}]`;
 
   const pageJSON = [
     `"You are the\\\\n"`,
-    `{"text":"${role}","color":"${color}"}`,
+    `{"text":"${escapeForMinecraftJSON(role)}","color":"${color}"}`,
     `"\\\\n\\\\n"`,
     `{"text":"${ability}","color":"black"}`
   ];
@@ -463,9 +479,7 @@ function createCombinedBookInsertCommand(player) {
     ]);
     const allPages = [`'${linkPage}'`, ...formattedPages.map(p => `'${p}'`)];
 
-    const escapedTitle = escapeForMinecraftJSON(`${player.role.name} tips`);
-
-    tipsBook = `{Slot:14,id:"minecraft:written_book",Count:1,components:{written_book_content:{title:"${escapedTitle}",author:"",pages:[${allPages.join(",")}]},custom_data:{role_book:1}}}`;
+    tipsBook = `{Slot:14,id:"minecraft:written_book",Count:1,components:{written_book_content:{title:"${role} tips",author:"",pages:[${allPages.join(",")}]},custom_data:{role_book:1}}}`;
   }
 
   const books = tipsBook ? `[${roleBook},${tipsBook}]` : `[${roleBook}]`;
@@ -622,7 +636,7 @@ function createVisitOrderBook(players, nightType = true) {
     if (!coords) continue; // skip if no coords
 
     const paddedId = p.id.toString().padStart(2, "0");
-    const lineText = `${paddedId}- ${p.role}\\n`;
+    const lineText = `${paddedId}- ${escapeForMinecraftJSONAlt(p.role)}\\n`;
 
     const lineComponent = {
       text: lineText,

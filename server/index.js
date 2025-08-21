@@ -565,8 +565,8 @@ function applyNames(players, nameMap) {
     const realNameKey = Object.keys(nameMap).find(
       key => key.toLowerCase() === trimmed.toLowerCase()
     );
-    const realName = nameMap[realNameKey];
-    if (!realName) continue;
+
+    const realName = nameMap[realNameKey] || trimmed;
 
     nameCommands.push(`name set ${trimmed} "${realName}"`);
     nameCommands.push(`scoreboard players display name ${trimmed} Player "${realName}"`);
